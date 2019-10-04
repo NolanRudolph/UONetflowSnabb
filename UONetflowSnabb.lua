@@ -10,9 +10,9 @@ local ipv4       = require("lib.protocol.ipv4")
 local udp        = require("lib.protocol.udp")
 local datagram   = require("lib.protocol.datagram")
 local raw_sock   = require("apps.socket.raw")
-local conf_pack = require("program.UONetflowSnabb.conf")
+local conf_pack  = require("program.UONetflowSnabb.conf")
 
-local ffi =      require("ffi")
+local ffi        = require("ffi")
 local C = ffi.C
 
 is_done = false
@@ -53,9 +53,18 @@ function run (args)
 	end
 
 	local flows_file = args[1]
-	local IF = args[2]
-	local s_eth = args[3]
-	local d_eth = args[4]
+	local s_eth = args[2]
+	local d_eth = args[3]
+	local IF = args[4]
+	
+	-- Check if a file was given as args[1]
+	local f = io.open(flows_file, "r")
+	if f ~= nil then 
+		io.input(f)
+	else
+		print("Flows file " .. flows_file .. " does not exist.")
+		main.exit(1)	
+	end
 
 	local c = config.new()
 	local RawSocket = raw_sock.RawSocket
