@@ -35,7 +35,7 @@ end
 
 function Grand_Packet:pull()
 	assert(self.output.output, "No compatible output port found.")
-	link.transmit(self.output.output, self.dgram:packet())
+	link.transmit(self.output.output, self.packet)
 	is_done = true
 end
 
@@ -81,5 +81,5 @@ function run (args)
 	config.app(c, "packet", Grand_Packet, {flows=flows_file,s_eth=s_eth,d_eth=d_eth})
 	config.link(c, "packet.output -> server.rx")
 	engine.configure(c)
-	engine.main({report = {showlinks=true}, done=is_done})
+	engine.main({report = {showlinks=true}})
 end
