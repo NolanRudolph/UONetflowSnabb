@@ -11,6 +11,7 @@ local udp        = require("lib.protocol.udp")
 local datagram   = require("lib.protocol.datagram")
 local raw_sock   = require("apps.socket.raw")
 local conf_pack  = require("program.UONetflowSnabb.conf")
+local pci        = require("lib.hardware.pci")
 
 local ffi        = require("ffi")
 local C = ffi.C
@@ -33,10 +34,13 @@ function Grand_Packet:new(args)
 	return setmetatable(o, {__index = Grand_Packet})
 end
 
+global_count = 0
+
 function Grand_Packet:pull()
 	assert(self.output.output, "No compatible output port found.")
 	link.transmit(self.output.output, self.packet)
-	is_done = true
+	global_count = global_count + 1
+	print(global_count)
 end
 
 is_done = false
@@ -51,12 +55,13 @@ end
 
 
 function run (args)
-	if not (#args == 4) then
-		print("Usage: SnabbUONetflow <Flows> <S Eth> <D Eth> <IF>")
+	if not (#args == 5) then
+		print("Usage: SnabbUONetflow <Flows> <S Eth> <D Eth> <IF> <PCI>")
 		print("       Flows : File containing csv network flows based on README.md")
 		print("       S Eth : Source Ethernet Address")
 		print("       D Eth : Destination Ethernet Address")
-		print("       IF    : Interface for files to be transmitted over")
+		print("       IF    : Interface for packets to be transmitted over")
+		print("       PCI   : PCI Address of compatible NIC")
 		main.exit(1)
 	end
 
@@ -64,6 +69,7 @@ function run (args)
 	local s_eth = args[2]
 	local d_eth = args[3]
 	local IF = args[4]
+	local pci_addr = args[5]
 	
 	-- Check if a file was given as args[1]
 	local f = io.open(flows_file, "r")
@@ -77,9 +83,21 @@ function run (args)
 	local c = config.new()
 	local RawSocket = raw_sock.RawSocket
 
-	config.app(c, "server", RawSocket, IF)
+	local device_info = pci.device_info(pci_addr)
+	local driver = require(device_info.driver).driver
+
+	print("Looking for rx")
+	print("RX would have: nic." .. device_info.rx)
+	print("Looking for tx")
+	print("TX would have: nic." .. device_info.tx)
+	
+	--config.app(c, "server", RawSocket, IF)
+	config.app(c, "nic", driver, {pciaddr = pci_addr})
+	
 	config.app(c, "packet", Grand_Packet, {flows=flows_file,s_eth=s_eth,d_eth=d_eth})
-	config.link(c, "packet.output -> server.rx")
+	config.link(c, "packet.output -> nic.tx")
+
+	--config.link(c, "packet.output -> server.rx")
 	engine.configure(c)
 	engine.main({report = {showlinks=true}})
 end
