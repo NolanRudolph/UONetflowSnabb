@@ -124,7 +124,14 @@ function packetize(flow_file, s_eth, d_eth)
 
 	final_header(o, proto, s_port, d_port, num_packets, num_bytes)
 
-	return o
+	ret_obj =
+	{
+		packet = o.dgram:packet(),
+		packets_left = num_packets,
+		payload_size = o.payload_size
+	}
+
+	return ret_obj
 end
 
 function final_header(obj, proto, s_port, d_port, packets, bytes)
