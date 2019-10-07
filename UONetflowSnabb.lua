@@ -20,7 +20,6 @@ is_done = false
 Grand_Packet = {}
 
 function Grand_Packet:new(args)
-	print("Hello from Grand_Packet:new()!!")
 	-- Claim variables from list "args" invoked from config.app()
 	flow_file = io.open(args["flows"], "r")
 	s_eth = args["s_eth"]
@@ -28,7 +27,16 @@ function Grand_Packet:new(args)
 
 	local o = conf_pack.packetize(flow_file, s_eth, d_eth) 
 
+	print("OBJECT RETURNED")
+	print("My payload size is: " .. o.payload_size)
+
 	return setmetatable(o, {__index = Grand_Packet})
+end
+
+function Grand_Packet:pull()
+	assert(self.output.output, "No compatible output port found.")
+	link.transmit(self.output.output, self.dgram:packet())
+	is_done = true
 end
 
 is_done = false
@@ -71,7 +79,7 @@ function run (args)
 
 	config.app(c, "server", RawSocket, IF)
 	config.app(c, "packet", Grand_Packet, {flows=flows_file,s_eth=s_eth,d_eth=d_eth})
-	--config.link(c, "packet.output -> server.rx")
+	config.link(c, "packet.output -> server.rx")
 	engine.configure(c)
 	engine.main({report = {showlinks=true}, done=is_done})
 end
