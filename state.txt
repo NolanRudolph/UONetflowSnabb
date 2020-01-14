@@ -1,3 +1,6 @@
-The current state of this packet generator is its current capability to transmit packets at 14 mpps. Of course, this is subject to change as I implement the logic of converting CSV flow level data to actual packets.  
+The current state of this packet generator is its current capability to transmit packets at 14 mpps.
+
+Of course, this is subject to change as I implement the logic of converting CSV flow level data to 
+actual packets.  
   
 As it currently stands, my packet generator spams another node with UDP packets for approximately 10 seconds at 14 mpps.
